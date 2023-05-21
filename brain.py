@@ -1,5 +1,7 @@
 import random
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 
 
 import parameters as prm
@@ -11,9 +13,9 @@ class Neuron:
 
         self.id = neuron_id
 
-        if self.id < len(self.brain.input_neurons):
+        if self.id < prm.num_input_neurons:
             self.type = "input"
-        elif self.id < len(self.brain.input_neurons) + len(self.brain.internal_neurons):
+        elif self.id < prm.num_input_neurons + prm.num_internal_neurons:
             self.type = "internal"
         else:
             self.type = "output"
@@ -23,9 +25,30 @@ class Neuron:
 
         self.input_connections = []
 
+    def connect(self):
         for connection in self.brain.connections:
             if connection.sink == self:
                 self.input_connections.append(connection)
+
+    def draw_connections(self):
+        G = nx.DiGraph()
+
+        for connection in self.input_connections:
+            G.add_edge(connection.source.id, connection.sink.id)
+
+        # Draw the graph
+        pos = nx.spring_layout(G)
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            node_color="lightblue"
+            if self.type == "input"
+            else ("lightgreen" if self.type == "internal" else "lightcoral"),
+            node_size=500,
+            label=True,
+        )
+        nx.draw_networkx_edges(G, pos, edge_color="gray", arrows=True)
+        nx.draw_networkx_labels(G, pos)
 
     def calculate_activation(self):
         if self.id == 0:
@@ -79,6 +102,8 @@ class Connection:
 
 class Brain:
     def __init__(self, dot):
+        print("next\n")
+
         self.dot = dot
 
         self.input_neurons = []
@@ -86,12 +111,6 @@ class Brain:
         self.output_neurons = []
 
         self.connections = []
-
-        for i in range(0, len(self.dot.genome.brain), 30):
-            source_id = int(self.dot.genome.brain[i : i + 7], 2)
-            sink_id = int(self.dot.genome.brain[i + 7 : i + 14], 2)
-            weight = int(self.dot.genome.brain[i + 14 : i + 30], 2) / 8500
-            self.connections.append(Connection(self, source_id, sink_id, weight))
 
         # Assign IDs to input neurons
         for i in range(prm.num_input_neurons):
@@ -108,6 +127,114 @@ class Brain:
             prm.num_input_neurons + prm.num_internal_neurons, prm.num_neurons
         ):
             self.output_neurons.append(Neuron(self, i))
+
+        # make connections
+        for i in range(0, len(self.dot.genome.brain), 30):
+            source_id = int(self.dot.genome.brain[i : i + 7], 2) % (
+                prm.num_input_neurons + prm.num_internal_neurons
+            )
+            sink_id = (
+                int(self.dot.genome.brain[i + 7 : i + 14], 2)
+                % (prm.num_internal_neurons + prm.num_output_neurons)
+                + prm.num_input_neurons
+            )
+            weight = (
+                int(self.dot.genome.brain[i + 14 : i + 30], 2) / (2**16 - 1)
+            ) * 8 - 4
+
+            self.connections.append(Connection(self, source_id, sink_id, weight))
+
+        # connect neruons
+        for input_neuron, internal_neuron, output_neuron in zip(
+            self.input_neurons, self.internal_neurons, self.output_neurons
+        ):
+            input_neuron.connect()
+            internal_neuron.connect()
+            output_neuron.connect()
+
+    def draw_brain(self):
+        dot_id = self.dot.id
+        G = nx.DiGraph()
+
+        for neuron in self.input_neurons + self.internal_neurons + self.output_neurons:
+            G.add_node(neuron)
+
+        for connection in self.connections:
+            G.add_edge(connection.source, connection.sink, weight=connection.weight)
+
+        # Define positions for different neuron types
+        pos = {}
+
+        # Positioning for input neurons (blue)
+        input_x = -1.5
+        min_distance = 0.2  # Minimum distance between neighboring neurons
+        for neuron in self.input_neurons:
+            y = random.uniform(-0.5, 0.5)
+            pos[neuron] = np.array([input_x, y])
+            input_x += min_distance
+
+        # Positioning for internal neurons (green)
+        internal_x = -0.5
+        for neuron in self.internal_neurons:
+            y = random.uniform(-0.5, 0.5)
+            pos[neuron] = np.array([internal_x, y])
+            internal_x += min_distance
+
+        # Positioning for output neurons (red)
+        output_x = 0.5
+        for neuron in self.output_neurons:
+            y = random.uniform(-0.5, 0.5)
+            pos[neuron] = np.array([output_x, y])
+            output_x += min_distance
+
+        # Draw neurons
+        neuron_colors = {
+            "input": "lightgreen",
+            "internal": "lightgrey",
+            "output": "lightcoral",
+        }
+        for neuron in G.nodes:
+            node_color = neuron_colors.get(neuron.type, "lightgray")
+            nx.draw_networkx_nodes(
+                G, pos, nodelist=[neuron], node_color=node_color, node_size=500
+            )
+
+            # Add neuron ID as a label inside the circle
+            nx.draw_networkx_labels(G, pos, {neuron: neuron.id}, font_size=10)
+
+        # Draw connections
+        edge_colors = []
+        edge_widths = []
+        for source, sink, attrs in G.edges(data=True):
+            weight = attrs.get("weight", 0)  # Set weight to 0 if not present
+            edge_widths.append(abs(weight) * 0.5)  # Adjust the scaling factor as needed
+            edge_colors.append("red" if weight < 0 else "gray")
+
+        edges = G.edges()
+        nx.draw_networkx_edges(
+            G,
+            pos,
+            edgelist=edges,
+            arrows=True,
+            edge_color=edge_colors,
+            width=edge_widths,
+        )
+
+        # Remove axis labels and ticks
+        plt.axis("off")
+
+        # Set the figure title to the dot's ID
+        plt.title(f"Dot ID: {dot_id}")
+
+        # Save the figure as an image file with a custom filename based on the dot's ID
+        filename = f"dot_{dot_id}.png"
+        plt.savefig(filename)
+
+        # Close the figure to release memory resources
+        plt.close()
+
+        # Optionally, you can return the filename if you need it for further processing
+        return filename
 
     def get_output_activations(self):
         output_activations = []

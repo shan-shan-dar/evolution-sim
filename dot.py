@@ -8,8 +8,13 @@ import parameters as prm
 
 
 class Dot:
+    id = 0
+
     def __init__(self, world, x, y, genome):
         self.alive = True
+
+        self.id = Dot.id
+        Dot.id += 1
 
         # environment
         self.world = world
@@ -23,6 +28,8 @@ class Dot:
 
         # brain
         self.brain = Brain(self)
+        image_filename = self.brain.draw_brain()
+        print("Brain visualization saved as:", image_filename)
 
         # gene independent properties
         self.age = 0
@@ -178,16 +185,18 @@ class Dot:
         prm.selection_pressures(self)
 
         # movement
-        if output_activations[0] <= -1 / 3:
+        movement_threshold = 0.3
+
+        if output_activations[0] <= -movement_threshold:
             dx = -1
-        elif output_activations[0] >= 1 / 3:
+        elif output_activations[0] >= movement_threshold:
             dx = 1
         else:
             dx = 0
 
-        if output_activations[1] <= -1 / 3:
+        if output_activations[1] <= -movement_threshold:
             dy = -1
-        elif output_activations[1] >= 1 / 3:
+        elif output_activations[1] >= movement_threshold:
             dy = 1
         else:
             dy = 0

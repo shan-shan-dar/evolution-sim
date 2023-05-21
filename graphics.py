@@ -2,7 +2,6 @@ import pygame
 
 
 def draw_dot(display, world, dot):
-
     center_x = (dot.x + 0.5) * world.unit
     center_y = (dot.y + 0.5) * world.unit
 
@@ -44,18 +43,9 @@ def draw_ui(world):
     )
 
     # Add the average generation count to the UI surface
-    if world.mean_lifespans:
-        mean_mean_lifespan = sum(world.mean_lifespans) / len(world.mean_lifespans)
-        approx_generations = round(world.time_elapsed / mean_mean_lifespan, 1)
-    else:
-        approx_generations = round(
-            world.time_elapsed
-            / (sum(dot.lifespan for dot in world.dots) / len(world.dots)),
-            1,
-        )
 
     lifespan_text = font.render(
-        "Approx. generations: " + str(approx_generations),
+        "Approx. generations: " + str(world.approx_generations),
         True,
         (0, 0, 0),
     )
