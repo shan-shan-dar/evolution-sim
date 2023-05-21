@@ -28,8 +28,7 @@ class Dot:
 
         # brain
         self.brain = Brain(self)
-        image_filename = self.brain.draw_brain()
-        print("Brain visualization saved as:", image_filename)
+        # self.brain.draw_brain()
 
         # gene independent properties
         self.age = 0

@@ -8,7 +8,7 @@ WORLD_COLOR = (0, 0, 0)
 
 lifespan_update_interval = 500
 
-STARTING_POPULATION = 2
+STARTING_POPULATION = 200
 
 FPS = 60
 

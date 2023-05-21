@@ -102,8 +102,6 @@ class Connection:
 
 class Brain:
     def __init__(self, dot):
-        print("next\n")
-
         self.dot = dot
 
         self.input_neurons = []
