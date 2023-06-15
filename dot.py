@@ -177,7 +177,7 @@ class Dot:
         self.last_x = self.x
         self.last_y = self.y
 
-        self.brain.update()
+        self.brain.update_parallel()
         # Get output activations from the dot's brain
         output_activations = self.brain.get_output_activations()
 

@@ -6,6 +6,37 @@ import matplotlib.pyplot as plt
 
 import parameters as prm
 
+import threading
+
+
+class NeuronUpdaterThread(threading.Thread):
+    def __init__(self, neuron):
+        threading.Thread.__init__(self)
+        self.neuron = neuron
+
+    def run(self):
+        print(
+            f"Neuron {self.neuron.id} activation calculation started in thread {threading.current_thread().name}",
+            flush=True,
+        )
+        self.neuron.calculate_activation()
+        print(
+            f"Neuron {self.neuron.id} activation calculation finished in thread {threading.current_thread().name}",
+            flush=True,
+        )
+
+
+def update_neurons_parallel(neurons):
+    threads = []
+
+    for neuron in neurons:
+        thread = NeuronUpdaterThread(neuron)
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()
+
 
 class Neuron:
     def __init__(self, brain, neuron_id):
@@ -68,15 +99,39 @@ class Neuron:
                 self.brain.dot.radius
             )
 
-        else:
+        def calculate_activation_thread():
             weighted_sum = sum(
                 connection.weight * connection.source.activation
                 for connection in self.input_connections
             )
             self.activation = sigmoid(weighted_sum + self.bias)
 
+        # Create a thread for the calculation
+        activation_thread = threading.Thread(target=calculate_activation_thread)
+
+        # Start the thread
+        activation_thread.start()
+
+        # Wait for the thread to finish
+        activation_thread.join()
+
     def reset_activation(self):
         self.activation = 0.0
+
+    def update_parallel(self):
+        # Create multiple threads
+        threads = []
+        for neuron in self.input_neurons + self.internal_neurons + self.output_neurons:
+            thread = threading.Thread(target=neuron.calculate_activation)
+            threads.append(thread)
+
+        # Start all the threads
+        for thread in threads:
+            thread.start()
+
+        # Wait for all threads to finish
+        for thread in threads:
+            thread.join()
 
 
 class Connection:
@@ -249,6 +304,13 @@ class Brain:
 
         for neuron in self.output_neurons:
             neuron.calculate_activation()
+
+    def update_parallel(self):
+        print("Updating neurons in parallel...", flush=True)
+        update_neurons_parallel(self.input_neurons)
+        update_neurons_parallel(self.internal_neurons)
+        update_neurons_parallel(self.output_neurons)
+        print("Parallel update finished.", flush=True)
 
 
 def sigmoid(x):

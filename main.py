@@ -20,7 +20,6 @@ fast_forward = False
 
 
 def draw():
-
     # Fill the display surface with the background color
     display.fill(world.color)
 
