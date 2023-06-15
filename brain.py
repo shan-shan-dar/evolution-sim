@@ -3,7 +3,6 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
 import parameters as prm
 
 import threading
@@ -15,15 +14,7 @@ class NeuronUpdaterThread(threading.Thread):
         self.neuron = neuron
 
     def run(self):
-        print(
-            f"Neuron {self.neuron.id} activation calculation started in thread {threading.current_thread().name}",
-            flush=True,
-        )
         self.neuron.calculate_activation()
-        print(
-            f"Neuron {self.neuron.id} activation calculation finished in thread {threading.current_thread().name}",
-            flush=True,
-        )
 
 
 def update_neurons_parallel(neurons):
@@ -306,11 +297,9 @@ class Brain:
             neuron.calculate_activation()
 
     def update_parallel(self):
-        print("Updating neurons in parallel...", flush=True)
         update_neurons_parallel(self.input_neurons)
         update_neurons_parallel(self.internal_neurons)
         update_neurons_parallel(self.output_neurons)
-        print("Parallel update finished.", flush=True)
 
 
 def sigmoid(x):
