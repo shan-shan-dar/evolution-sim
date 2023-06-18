@@ -6,9 +6,15 @@ WORLD_WIDTH = 300
 WORLD_HEIGHT = 300
 WORLD_COLOR = (0, 0, 0)
 
+INDICATOR_HEIGHT = 10
+INDICATOR_COLOR = (25, 35, 62)
+
+DEFAULT_SPEED = 10
+SPEED_INCREMENT = 5
+
 lifespan_update_interval = 500
 
-STARTING_POPULATION = 200
+STARTING_POPULATION = 50
 
 FPS = 60
 
@@ -20,14 +26,12 @@ MEAN_REPRODUCTION_RATE = 0.0075
 REPRODUCTION_RATE_STDDEV = 0.01
 RANDOM_OFFSPRING_POSITION = True
 
-num_connections = 5
+num_connections = 10
 
 GENOME_LENGTH = 6 + (30 * num_connections)
 
-FAST_FORWARD_RATE = 100
-
 num_input_neurons = 5
-num_internal_neurons = 2
+num_internal_neurons = 5
 num_output_neurons = 3
 
 num_neurons = num_input_neurons + num_internal_neurons + num_output_neurons
@@ -46,7 +50,7 @@ def selection_pressures(dot):
         return "Overcrowding"
 
     # right quarter
-    if random.random() < dot.x / (WORLD_WIDTH * 100):
+    if random.random() < (dot.x / (WORLD_WIDTH * 100)):
         dot.die()
         return "right"
 

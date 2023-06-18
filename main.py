@@ -1,81 +1,49 @@
-import pygame
-
-import graphics as gfx
 from world import World
 from dot import Dot
 import parameters as prm
+import pandas as pd
+import keyboard
+
+print("Initiated")
 
 world = World()
 
-pygame.init()
-
-clock = pygame.time.Clock()
-
-display = pygame.display.set_mode(
-    (world.width * world.unit + gfx.SIDE_PANEL, world.height * world.unit)
-)
-
 paused = False
-fast_forward = False
+stop_simulation = False
 
-
-def draw():
-
-    # Fill the display surface with the background color
-    display.fill(world.color)
-
-    if not fast_forward:
-        # Draw the grid and dots
-        for x in range(world.width):
-            for y in range(world.height):
-                if isinstance(world.grid[x][y], Dot):
-                    dot = world.grid[x][y]
-                    gfx.draw_dot(display, world, dot)
-
-    # Draw the UI surface
-    ui_surface = gfx.draw_ui(world)
-    display.blit(ui_surface, (world.width * world.unit, 0))
-
-    # Draw pause indicator
-    if paused:
-        gfx.draw_pause(display)
-
-    # Draw "END" message if population is extinct
-    if not world.dots:
-        gfx.draw_end_message(display, world)
-
-    # Draw static message if in fast forward mode
-    if fast_forward:
-        font = pygame.font.Font(None, 36)
-        text = font.render("Fast Forward Mode", True, (255, 255, 255))
-        text_rect = text.get_rect(
-            center=(world.width * world.unit // 2, world.height * world.unit // 2)
-        )
-        display.blit(text, text_rect)
-
-    pygame.display.update()
-
+simulation_data = {}
+dot_static_info = {}
 
 world.spawn(prm.STARTING_POPULATION)
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            quit()
+frame = 0  # Initialize frame counter
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                paused = not paused
-            if event.key == pygame.K_f:
-                fast_forward = not fast_forward
-
+while not stop_simulation:
     if not paused:
-        if fast_forward:
-            world.update()
-            clock.tick(prm.FAST_FORWARD_RATE * prm.FPS)
-        else:
-            world.update()
-            clock.tick(prm.FPS)
+        world.update()
 
-    draw()
+    # Store dot information
+    simulation_data[frame] = {}  # Create a new frame entry in dot_data
+    for dot in world.dots:
+        simulation_data[frame][dot.id] = {
+            "x": (dot.x + 0.5) * world.unit,
+            "y": (dot.y + 0.5) * world.unit,
+            "age": dot.age,
+            "genome": dot.genome.genome,
+            "color": dot.color,
+            "size": dot.size,
+            "speed": dot.speed,
+            "radius": dot.radius,
+            "reproduction_rate": dot.reproduction_rate,
+            "lifespan": dot.lifespan,
+        }
+
+    if not world.dots or keyboard.is_pressed("s"):
+        stop_simulation = True
+
+    print(frame, end="\r")
+    frame += 1  # Increment the frame counter
+
+# Save dot_data to a CSV file
+simulation_data_df = pd.DataFrame.from_dict(simulation_data, orient="index")
+simulation_data_df.to_csv("simulation_data.csv", index_label="frame")

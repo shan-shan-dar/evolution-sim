@@ -90,8 +90,8 @@ class Dot:
         return (r, g, b)
 
     def move(self, dx, dy):
-        new_x = self.x + dx
-        new_y = self.y + dy
+        new_x = self.x + round(dx)
+        new_y = self.y + round(dy)
 
         if (
             0 <= new_x < self.world.width
@@ -184,26 +184,24 @@ class Dot:
         prm.selection_pressures(self)
 
         # movement
-        movement_threshold = 0.3
+        movement_gain = 1.0  # Adjust this value to control the sensitivity of movement
 
-        if output_activations[0] <= -movement_threshold:
-            dx = -1
-        elif output_activations[0] >= movement_threshold:
-            dx = 1
-        else:
-            dx = 0
+        dx = self.map_activation_to_movement(output_activations[0], movement_gain)
+        dy = self.map_activation_to_movement(output_activations[1], movement_gain)
 
-        if output_activations[1] <= -movement_threshold:
-            dy = -1
-        elif output_activations[1] >= movement_threshold:
-            dy = 1
-        else:
-            dy = 0
+        self.move(dx, dy)
 
         # radius sensing
         self.radius = abs(output_activations[2]) * 150
 
-        self.move(dx, dy)
-
         if random.random() < self.reproduction_rate:
             self.reproduce()
+
+    def map_activation_to_movement(self, activation, gain):
+        # Map the activation value to a movement value between -1 and 1
+        mapped_value = activation * gain
+        mapped_value = max(
+            min(mapped_value, 1.0), -1.0
+        )  # Clamp the value within the range
+
+        return mapped_value

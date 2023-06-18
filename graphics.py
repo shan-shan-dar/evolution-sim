@@ -1,13 +1,14 @@
 import pygame
+import parameters as prm
 
 
-def draw_dot(display, world, dot):
-    center_x = (dot.x + 0.5) * world.unit
-    center_y = (dot.y + 0.5) * world.unit
+def draw_dot(display, dot):
+    center_x = (dot["x"] + 0.5) * prm.UNIT
+    center_y = (dot["y"] + 0.5) * prm.UNIT
 
-    radius = dot.size * world.unit
+    radius = dot["size"] * prm.UNIT
 
-    pygame.draw.circle(display, dot.color, (center_x, center_y), radius)
+    pygame.draw.circle(display, dot["color"], (center_x, center_y), radius)
 
 
 def draw_pause(display):
@@ -18,46 +19,18 @@ def draw_pause(display):
     display.blit(pause_surf, (10, 10))
 
 
-def draw_end_message(display, world):
-    font = pygame.font.SysFont(None, 48)
-    text = font.render("EXTINCT", True, (255, 255, 255))
-    text_rect = text.get_rect(
-        center=(world.width * world.unit // 2, world.height * world.unit // 2)
+def draw_stop(display):
+    stop_surf = pygame.Surface((40, 40), pygame.SRCALPHA)
+    stop_surf.fill((0, 0, 0, 179))
+    pygame.draw.rect(stop_surf, (255, 255, 255, 179), pygame.Rect(10, 10, 20, 20))
+    display.blit(stop_surf, (10, 10))
+
+
+def draw_indicator(display, position):
+    indicator_height = prm.INDICATOR_HEIGHT
+    indicator_color = prm.INDICATOR_COLOR
+    pygame.draw.rect(
+        display,
+        indicator_color,
+        pygame.Rect(0, prm.WORLD_HEIGHT * prm.UNIT, position, indicator_height),
     )
-    display.blit(text, text_rect)
-
-
-SIDE_PANEL = 400
-
-
-def draw_ui(world):
-    # Create a new surface to display the extra UI
-    ui_surface = pygame.Surface((SIDE_PANEL, world.height * world.unit))
-    ui_surface.fill((243, 243, 243, 255))
-
-    # Add the age of the simulation to the UI surface
-    font = pygame.font.Font(None, 24)
-
-    elapsed_text = font.render(
-        "Time elapsed: " + str(world.time_elapsed), True, (0, 0, 0)
-    )
-
-    # Add the average generation count to the UI surface
-
-    lifespan_text = font.render(
-        "Approx. generations: " + str(world.approx_generations),
-        True,
-        (0, 0, 0),
-    )
-
-    population_text = font.render(
-        "Population: " + str(len(world.dots)), True, (0, 0, 0)
-    )
-
-    ui_surface.blit(elapsed_text, (10, 10))
-
-    ui_surface.blit(lifespan_text, (10, 40))
-
-    ui_surface.blit(population_text, (10, 70))
-
-    return ui_surface

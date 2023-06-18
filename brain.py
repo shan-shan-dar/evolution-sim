@@ -1,8 +1,8 @@
+import math
 import random
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-
 
 import parameters as prm
 
@@ -252,4 +252,4 @@ class Brain:
 
 
 def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+    return 1 / (1 + math.exp(-x))
